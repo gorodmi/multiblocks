@@ -1,0 +1,41 @@
+setrate 500
+
+mainLoop:
+waitForData:
+    read i cell1 127
+    jump waitForData equal i 0
+read pos cell1 i
+op mod x pos @mapw
+op idiv y pos @mapw
+getblock building msg x y
+read dt cell1 0
+
+# add code here
+op sub y-1 y 1
+op add y+1 y 1
+getblock building input x y+1
+getblock building output x y-1
+sensor water input @water
+sensor cryo output @cryofluid
+jump noOutput lessThan water 0.2
+jump noOutput greaterThan cryo 19.9
+    op sub water water 0.2
+    op add cryo cryo 0.1
+    setprop @water input water
+    setprop @cryofluid output cryo
+noOutput:
+print "Generic Liquid Crafter\n\n"
+print "[sky]Water:[] "
+op idiv watert water 0.25
+op mul watert watert 0.25
+print watert
+print "/16\n[cyan]Cryofluid:[] "
+op idiv cryot cryo 0.25
+op mul cryot cryot 0.25
+print cryot
+print "/20"
+printflush msg
+# end
+
+write 0 cell1 127
+jump mainLoop always

@@ -1,0 +1,67 @@
+setrate 500
+
+mainLoop:
+waitForData:
+    read i cell1 127
+    jump waitForData equal i 0
+read pos cell1 i
+op mod x pos @mapw
+op idiv y pos @mapw
+getblock building msg x y
+read dt cell1 0
+
+# add code here
+op sub y-2 y 2
+op sub y-1 y 1
+op add y+1 y 1
+
+op sub x-1 x 1
+op add x+1 x 1
+
+getblock building output x-1 y-2
+control config output @carbide 0 0 0
+
+getblock building inputContainer x y+1
+getblock building battery x-1 y
+getblock building liquidInput x-1 y-1
+getblock building outputContainer x y-1
+
+sensor copper inputContainer @copper
+sensor power battery @totalPower
+sensor neoplasm liquidInput @neoplasm
+sensor carbide outputContainer @carbide
+
+jump noOutput lessThan copper 50
+jump noOutput lessThan power 4000
+jump noOutput lessThan neoplasm 20
+jump noOutput greaterThan carbide 300
+    op sub copper copper 50
+    op sub power power 4000
+    op sub neoplasm neoplasm 20
+    op add carbide carbide 1
+    setprop @copper inputContainer copper
+    setprop @totalPower battery power
+    setprop @neoplasm liquidInput neoplasm
+    setprop @carbide outputContainer carbide
+noOutput:
+print "Carbide Printer /!\\n"
+print "Input: 50 4000 20\n"
+print "Output: 1\n\n"
+print "[#d99d73ff]Copper:[] "
+print copper
+print "/300\n[yellow]Power:[] "
+op idiv powert power 0.25
+op mul powert powert 0.25
+print powert
+print "/4000\n[#c33e2bff]Neoplasm:[] "
+op idiv neoplasmt neoplasm 0.25
+op mul neoplasmt neoplasmt 0.25
+print neoplasmt
+print "/20\n[#89769aff]Carbide:[] "
+print carbide
+print "/300"
+printflush msg
+# end
+
+write 0 cell1 127
+jump mainLoop always

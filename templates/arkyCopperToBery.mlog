@@ -1,0 +1,49 @@
+setrate 500
+
+mainLoop:
+waitForData:
+    read i cell1 127
+    jump waitForData equal i 0
+read pos cell1 i
+op mod x pos @mapw
+op idiv y pos @mapw
+getblock building msg x y
+read dt cell1 0
+
+# add code here
+op sub x-1 x 1
+op add y+1 y 1
+op add x+1 x 1
+op add y+2 y 2
+getblock building output x-1 y
+control config output @beryllium 0 0 0
+getblock building liquid x+1 y+2
+getblock building container x y+1
+sensor copper container @copper
+sensor arky liquid @arkycite
+sensor bery container @beryllium
+jump noOutput lessThan copper 1
+jump noOutput lessThan arky 0.1
+jump noOutput greaterThan bery 299
+    op sub copper copper 1
+    op sub arky arky 0.1
+    op add bery bery 1
+    setprop @copper container copper
+    setprop @arkycite liquid arky
+    setprop @beryllium container bery
+noOutput:
+print "Generic Copper Machine\n\n"
+print "[#d99d73ff]Copper:[] "
+print copper
+print "/300\n[#84a94bff]Arkycite:[] "
+op idiv arkyt arky 0.25
+op mul arkyt arkyt 0.25
+print arkyt
+print "/20\n[#3a8f64ff]Beryllium:[] "
+print bery
+print "/300"
+printflush msg
+# end
+
+write 0 cell1 127
+jump mainLoop always

@@ -1,0 +1,18 @@
+setrate 500
+
+mainLoop:
+waitForData:
+    read i cell1 127
+    jump waitForData equal i 0
+read pos cell1 i
+op mod x pos @mapw
+op idiv y pos @mapw
+getblock building msg x y
+read dt cell1 0
+
+# add code here
+
+# end
+
+write 0 cell1 127
+jump mainLoop always

@@ -1,0 +1,109 @@
+setrate 500
+
+set lCorner -1
+set rCorner 1
+set bCorner -1
+set tCorner 1
+
+mainLoop:
+sensor msgX message1 @x
+sensor msgY message1 @y
+
+set i 0
+loopNewMultiblocks:
+    fetch buildCount bCount @sharded 0 @message
+    jump loopNewMultiblocks__return greaterThan i bCount
+    fetch build message @sharded i @message
+    jump loopNewMultiblocks__continue equal message message1 # dont detect template
+
+    sensor x message @x
+    sensor y message @y
+    op mul pos y @mapw
+    op add pos pos x
+
+    set xOffset lCorner
+    xOff_1:
+        set yOffset bCorner
+        yOff_1:
+            op add newX x xOffset
+            op add newY y yOffset
+            op add newMsgX msgX xOffset
+            op add newMsgY msgY yOffset
+            getblock block newBlock newX newY
+            getblock block msgBlock newMsgX newMsgY
+            jump loopNewMultiblocks__continue notEqual newBlock msgBlock
+            op add yOffset yOffset 1
+            jump yOff_1 lessThanEq yOffset tCorner
+        op add xOffset xOffset 1
+        jump xOff_1 lessThanEq xOffset rCorner
+    
+    # multiblock is valid
+    read length cell1 0
+    op add length length 1
+    jump loopNewMultiblocks__return greaterThan length 126 # multiblock limit
+    write pos cell1 length
+    write length cell1 0
+    setblock block @world-message x y @sharded 0
+loopNewMultiblocks__continue:
+    op add i i 1
+    jump loopNewMultiblocks always
+loopNewMultiblocks__return:
+
+
+set i 1
+read length cell1 0
+checkMultiblocks:
+    read length cell1 0
+    jump checkMultiblocks__return greaterThan i length
+
+    read pos cell1 i
+    op mod x pos @mapw
+    op idiv y pos @mapw
+
+    set xOffset lCorner
+    xOff_2:
+        set yOffset bCorner
+        yOff_2:
+            op add newX x xOffset
+            op add newY y yOffset
+            op add newMsgX msgX xOffset
+            op add newMsgY msgY yOffset
+            getblock block newBlock newX newY
+            getblock block msgBlock newMsgX newMsgY
+            jump yOff_2__continue equal newBlock @world-message
+            jump notMultiblock notEqual newBlock msgBlock
+            yOff_2__continue:
+            op add yOffset yOffset 1
+            jump yOff_2 lessThanEq yOffset tCorner
+        op add xOffset xOffset 1
+        jump xOff_2 lessThanEq xOffset rCorner
+
+    # multiblock is valid, tick
+    write i cell1 127 # send data to template proc
+
+    waitForCompletion:
+        read data cell1 127
+        jump waitForCompletion notEqual data 0
+
+    jump checkMultiblocks__continue always
+notMultiblock:
+    # remove multiblock
+    setblock block @message x y @sharded 0
+    op sub length length 1
+    write 0 cell1 i
+    write length cell1 0
+    set j i
+    removing:
+        op add next j 1
+        jump removing__return greaterThan next 126
+        read data cell1 next
+        write data cell1 j
+        set j next
+        jump removing lessThanEq j length
+    removing__return:
+    write 0 cell1 j
+checkMultiblocks__continue:
+    op add i i 1
+    jump checkMultiblocks always
+checkMultiblocks__return:
+jump mainLoop always
